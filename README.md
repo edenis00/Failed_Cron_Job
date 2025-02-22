@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Failed Cron Job monitors the uptime of specified websites (the default is 2 sites) and integrates with the Telex platform. It checks the availability of the provided websites and sends the status results to the specified return URL (which is a Telex channel URL).
+The Failed Cron Job Monitor is a monitoring and alerting tool that tracks failed cron jobs and integrates with the Telex platform. It checks for failed cron jobs by analyzing system logs and sends alerts to Telex after 5mintues if failures are detected.
 
 ## Setting Up
 
@@ -22,7 +22,7 @@ This is a FastAPI project and has its dependencies defined in the requirements.t
 
 3. **Run the application**: Start the application with the command:
     ```bash
-    uv run main.py
+    uvicorn main:app --reload
     ```
 
 
@@ -30,18 +30,18 @@ The server should now be running and accessible at `http://localhost:8000`.
 
 ## Integration JSON
 
-The integration JSON file defined at the route `/integration.json` defines all the details needed for this integration to work on Telex. Since it is an interval integration that doesn't need data, it only exposes a /tick_url endpoint. Telex will call this endpoint according to the cron interval defined in the settings. The JSON snippet below shows the failed cron job json for the deployed url at: https://failed-cron-job.onrender.com/integration.json. If you deploy it somewhere else, the `app_url`, `website`, and `tick_url` will be updated. 
+The integration JSON file defined at the route `/integration.json` defines all the details needed for this integration to work on Telex. Since it is an interval integration that doesn't need data, it only exposes a /tick_url endpoint. Telex will call this endpoint according to the cron interval defined in the settings. The JSON snippet below shows the failed cron job json for the deployed url at: https://failed-cron-job.onrender.com/integration.json. If you deploy it somewhere else, the `app_url`, `website`, and `tick_url` will be updated.
 
 ```json
 {
   "data": {
     "date": {
-      "created_at": "2025-02-09",
-      "updated_at": "2025-02-09"
+      "created_at": "2025-02-22",
+      "updated_at": "2025-02-22"
     },
     "descriptions": {
       "app_name": "Failed Cron Job Monitor",
-      "app_description": "A local Failed Cron Job Monitor",
+      "app_description": "Monitors failed cron job and sends alerts",
       "app_logo": "https://i.imgur.com/lZqvffp.png",
       "app_url": "https://failed-cron-job.onrender.com",
       "background_color": "#fff"
@@ -49,18 +49,26 @@ The integration JSON file defined at the route `/integration.json` defines all t
     "is_active": false,
     "integration_type": "interval",
     "key_features": [
-      "- monitors websites"
+      " Monitors failed cron jobs",
+      " Sends alerts to telex",
+      " Configurable cron log path and monitoring interval"
     ],
-    "category": "Monitoring",
+    "integration_category": "Monitoring & Logging",
     "author": "Elijah Denis",
     "website": "https://failed-cron-job.onrender.com/",
     "settings": [
       {
         "label": "cron_log_path",
-        "type": "text",
+        "type": "dropdown",
         "description": "Path to the cron log file",
         "default": "/var/log/syslog",
         "required": true
+        "options": [
+          "/var/log/syslog",
+          "/var/log/cron.log",
+          "/var/log/messages",
+          "/var/log/auth.log"
+        ]
       },
       {
         "label": "interval integration",
@@ -82,25 +90,25 @@ The `/tick` endpoint accepts a `POST` request with the following JSON payload:
 
 ```json
 {
-  "channel_id": "string",
-  "return_url": "string",
+{
+  "channel_id": "test_channel",
+  "return_url": "https://your_telex_webhook_url",
   "settings": [
     {
-        "label": "cron_log_path",
-        "type": "text",
-        "description": "Path to the cron log file",
-        "default": "/var/log/syslog",
-        "required": true
+      "label": "cron_log_path",
+      "type": "dropdown",
+      "required": true,
+      "default": "/var/log/syslog"
     },
     {
-        "label": "interval integration",
-        "type": "text",
-        "description": "Run in interval of 5 minutes",
-        "default": "*/5 * * * *",
-        "required": true
-    },
+      "label": "interval_integrations",
+      "type": "text",
+      "required": true,
+      "default": "*/5 * * * *"
+    }
   ]
 }
+
 ```
 
 ### Explanation:

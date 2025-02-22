@@ -149,7 +149,7 @@ async def cron_task(payload: CronPayload):
 
     failures = await check_cron_failures(cron_log_path)
 
-    if failures and payload.return_url:
+    if failures is not None and failures.strip():
         telex_format = {
             "message": f"Failed Cron Jobs Detected:\n{failures}",
             "username": "Cron Monitor",
