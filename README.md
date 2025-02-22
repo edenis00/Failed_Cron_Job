@@ -30,7 +30,7 @@ The server should now be running and accessible at `http://localhost:8000`.
 
 ## Integration JSON
 
-The integration JSON file defined at the route `/integration.json` defines all the details needed for this integration to work on Telex. Since it is an interval integration that doesn't need data, it only exposes a /tick_url endpoint. Telex will call this endpoint according to the cron interval defined in the settings. The JSON snippet below shows the failed cron job json for the deployed url at: https://telex-fastapi-uptime-monitor.onrender.com/integration.json. If you deploy it somewhere else, the `app_url`, `website`, and `tick_url` will be updated. 
+The integration JSON file defined at the route `/integration.json` defines all the details needed for this integration to work on Telex. Since it is an interval integration that doesn't need data, it only exposes a /tick_url endpoint. Telex will call this endpoint according to the cron interval defined in the settings. The JSON snippet below shows the failed cron job json for the deployed url at: https://failed-cron-job.onrender.com/integration.json. If you deploy it somewhere else, the `app_url`, `website`, and `tick_url` will be updated. 
 
 ```json
 {
@@ -40,10 +40,10 @@ The integration JSON file defined at the route `/integration.json` defines all t
       "updated_at": "2025-02-09"
     },
     "descriptions": {
-      "app_name": "Uptime Monitor",
-      "app_description": "A local uptime monitor",
+      "app_name": "Failed Cron Job Monitor",
+      "app_description": "A local Failed Cron Job Monitor",
       "app_logo": "https://i.imgur.com/lZqvffp.png",
-      "app_url": "https://telex-fastapi-uptime-monitor.onrender.com",
+      "app_url": "https://failed-cron-job.onrender.com",
       "background_color": "#fff"
     },
     "is_active": false,
@@ -52,8 +52,8 @@ The integration JSON file defined at the route `/integration.json` defines all t
       "- monitors websites"
     ],
     "category": "Monitoring",
-    "author": "Osinachi Chukwujama",
-    "website": "https://telex-fastapi-uptime-monitor.onrender.com",
+    "author": "Elijah Denis",
+    "website": "https://failed-cron-job.onrender.com/",
     "settings": [
       {
         "label": "cron_log_path",
@@ -71,7 +71,7 @@ The integration JSON file defined at the route `/integration.json` defines all t
       },
     ],
     "target_url": "",
-    "tick_url": "https://telex-fastapi-uptime-monitor.onrender.com/tick"
+    "tick_url": "https://failed-cron-job.onrender.com/tick"
   }
 }
 ```
@@ -102,10 +102,6 @@ The `/tick` endpoint accepts a `POST` request with the following JSON payload:
   ]
 }
 ```
-
-This data will be sent by Telex each time the cron interval is reached. The default interval is defined as `*/5 * * * *` which means every 5 minute according to cron-syntax. Use https://crontab.guru for help defining cron schedules. The integration reads the settings to figure out the sites that must be called immediately, then sends a response, if any, to the `return_url` provided by Telex. 
-
-NB: The `channel_id` has no exact use in this particular integration but could be extremely useful for an integration that must distinguish between channels, like a summarizer that defines an interval of 6 pm every day, and must stores accumulated messages in its local storage (sqlite, postgres, txt file, whatever it may be), and summarize them (reach out to the devs for more ideas like this).
 
 ### Explanation:
 - `channel_id`: The ID of the Telex channel.
