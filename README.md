@@ -30,7 +30,7 @@ The server should now be running and accessible at `http://localhost:8000`.
 
 ## Integration JSON
 
-The integration JSON file defined at the route `/integration.json` defines all the details needed for this integration to work on Telex. Since it is an interval integration that doesn't need data, it only exposes a /tick_url endpoint. Telex will call this endpoint according to the cron interval defined in the settings. The JSON snippet below shows the failed cron job json for the deployed url at: https://failed-cron-job.onrender.com/integration.json. If you deploy it somewhere else, the `app_url`, `website`, and `tick_url` will be updated.
+The integration JSON file defined at the route /integration.json contains all the details needed for this integration to work on Telex. Since it is an interval-based integration that doesn't require external data, it only exposes a /tick_url endpoint. Telex will call this endpoint according to the cron interval defined in the settings.
 
 ```json
 {
@@ -40,7 +40,7 @@ The integration JSON file defined at the route `/integration.json` defines all t
       "updated_at": "2025-02-22"
     },
     "descriptions": {
-      "app_name": "Failed Cron Job Monitor",
+      "app_name": "Failed Cron Job",
       "app_description": "Monitors failed cron job and sends alerts",
       "app_logo": "https://i.imgur.com/lZqvffp.png",
       "app_url": "https://failed-cron-job.onrender.com",
@@ -62,7 +62,7 @@ The integration JSON file defined at the route `/integration.json` defines all t
         "type": "dropdown",
         "description": "Path to the cron log file",
         "default": "/var/log/syslog",
-        "required": true
+        "required": true,
         "options": [
           "/var/log/syslog",
           "/var/log/cron.log",
@@ -113,6 +113,27 @@ The `/tick` endpoint accepts a `POST` request with the following JSON payload:
 
 ### Response:
 - **202 Accepted**: The monitoring task has been accepted and is running in the background.
+
+## Testing the Integration Locally
+You can test the `/tick` enpoint locally using `curl`
+
+```bash
+curl -X POST "https://ping.telex.im/v1/webhooks/01952f48-058d-778d-94b8-152bd25fbdf4" \
+     -H "Content-Type: application/json" \
+     -d '{
+          "channel_id": "Cron Jobs",
+          "return_url": "https://ping.telex.im/v1/webhooks/01952f48-058d-778d-94b8-152bd25fbdf4",
+          "settings": [
+            {
+              "label": "cron_log_path",
+              "type": "dropdown",
+              "required": true,
+              "default": "/var/log/syslog"
+            }
+          ]
+        }'
+
+```
 
 ## Background Handling
 

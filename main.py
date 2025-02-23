@@ -55,7 +55,7 @@ def integration_json(request: Request):
         "data": {
             "date": {"created_at": "2025-02-22", "updated_at": "2025-02-22"},
             "descriptions": {
-                "app_name": "Failed Cron Job Monitor",
+                "app_name": "Failed Cron Job",
                 "app_description": "Monitors failed cron job and sends alerts",
                 "app_logo": "https://i.imgur.com/lZqvffp.png",
                 "app_url": base_url,
@@ -65,7 +65,8 @@ def integration_json(request: Request):
             "integration_type": "interval",
             "key_features": [
                 "- Monitors failed cron jobs",
-                "- Sends alerts to telex"
+                "- Sends alerts to telex",
+                " Configurable cron log path and monitoring interval"
             ],
             "integration_category": "Monitoring & Logging",
             "author": "Elijah Denis",
@@ -103,11 +104,12 @@ async def check_cron_failures(log_path: str):
     log_file = Path(log_path)
 
     if not log_file.exists():
-        return None
+        return "Log file does not exist or is inaccessible."
 
     try:
         with log_file.open("r", encoding="utf-8") as file:
             log_lines = file.readlines()
+            print(log_lines)
 
             failure_patterns = [
                 r"CRON\[[0-9]+\]: \(.*\) CMD \(.*\) failed",
@@ -145,26 +147,27 @@ async def cron_task(payload: CronPayload):
 
     for setting in payload.settings:
         if setting.label == "cron_log_path" and Path(setting.default).exists():
-            cron_log_path = setting.default  # Only update if the file exists
+            cron_log_path = setting.default  
 
     failures = await check_cron_failures(cron_log_path)
 
     if failures is not None and failures.strip():
         telex_format = {
-            "message": f"Failed Cron Jobs Detected:\n{failures}",
+            "event_name": "Failed Cron Job",
             "username": "Cron Monitor",
-            "event_name": "Cron Failure Alert",
             "status": "error",
+            "message": f"Failed Cron Jobs Detected:\n{failures}"
         }
 
         headers = {"Content-Type": "application/json"}
 
         async with httpx.AsyncClient() as client:
-            await client.post(
+            response = await client.post(
                 payload.return_url,
                 json=telex_format,
                 headers=headers
             )
+        print(f"Telex Response: {response.status_code} - {response.text}")
 
 
 @app.post("/tick", status_code=202)
