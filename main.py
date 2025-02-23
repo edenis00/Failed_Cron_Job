@@ -86,7 +86,7 @@ def integration_json(request: Request):
                 },
 
             ],
-            "target_url": "",
+            "target_url": f"{base_url}",
             "tick_url": f"{base_url}/tick"
         }
     }

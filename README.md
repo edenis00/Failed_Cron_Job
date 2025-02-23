@@ -89,7 +89,7 @@ The integration JSON file defined at the route `/integration.json` defines all t
 The `/tick` endpoint accepts a `POST` request with the following JSON payload:
 
 ```json
-{
+
 {
   "channel_id": "test_channel",
   "return_url": "https://your_telex_webhook_url",
@@ -100,12 +100,6 @@ The `/tick` endpoint accepts a `POST` request with the following JSON payload:
       "required": true,
       "default": "/var/log/syslog"
     },
-    {
-      "label": "interval_integrations",
-      "type": "text",
-      "required": true,
-      "default": "*/5 * * * *"
-    }
   ]
 }
 
