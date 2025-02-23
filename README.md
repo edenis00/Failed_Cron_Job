@@ -118,11 +118,11 @@ The `/tick` endpoint accepts a `POST` request with the following JSON payload:
 You can test the `/tick` enpoint locally using `curl`
 
 ```bash
-curl -X POST "https://ping.telex.im/v1/webhooks/01952f48-058d-778d-94b8-152bd25fbdf4" \
+curl -X POST "https://webhooks/url" \
      -H "Content-Type: application/json" \
      -d '{
           "channel_id": "Cron Jobs",
-          "return_url": "https://ping.telex.im/v1/webhooks/01952f48-058d-778d-94b8-152bd25fbdf4",
+          "return_url": "https://webhooks/url",
           "settings": [
             {
               "label": "cron_log_path",
