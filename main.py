@@ -38,7 +38,6 @@ app.add_middleware(
 )
 
 TEST_LOG_PATH = os.path.abspath("/tmp/test_syslog.log")
-print(f"Test log path: {TEST_LOG_PATH}")
 
 log_paths = [
     "/var/log/syslog",
@@ -140,6 +139,8 @@ async def cron_task(payload: CronPayload):
     """
     Task for cron jobs and failures and send results.
     """
+    print(f"Test log path: {TEST_LOG_PATH}")
+    
 
     cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
 
@@ -184,7 +185,7 @@ def monitor_cron_jobs(payload: CronPayload, background_tasks: BackgroundTasks):
 
 @app.get("/check-log")
 def check_log_file():
-    log_path = "/opt/render/project/src/test/logs/test_syslog.log"
+    log_path = "/opt/render/project/src/tmp/test_syslog.log"
     log_file = Path(log_path)
 
     if not log_file.exists():
