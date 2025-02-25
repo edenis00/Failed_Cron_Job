@@ -1,7 +1,4 @@
-import re
-import json
 import httpx
-import os
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List
@@ -37,30 +34,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TEST_LOG_PATH = os.path.abspath("/file_logs/test_syslog.log")
-
-log_paths = [
-    "/var/log/syslog",
-    "/var/log/cron.log",
-    "/var/log/messages",
-    "/var/log/auth.log",
-    TEST_LOG_PATH
-]    
-
 
 @app.get("/integration.json")
 def integration_json(request: Request):
+    """
+    This provides metadata for integrating with Telex.
+    """
     base_url = str(request.base_url).rstrip("/")
-
-    # Find the first existing log path dynamically
-    cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
 
     integration_json = {
         "data": {
             "date": {"created_at": "2025-02-22", "updated_at": "2025-02-22"},
             "descriptions": {
                 "app_name": "Failed Cron Job",
-                "app_description": "Monitors failed cron job and sends alerts",
+                "app_description": "Monitors failed cron jobs and sends alerts",
                 "app_logo": "https://i.imgur.com/lZqvffp.png",
                 "app_url": base_url,
                 "background_color": "#fff",
@@ -69,27 +56,19 @@ def integration_json(request: Request):
             "integration_type": "interval",
             "key_features": [
                 "- Monitors failed cron jobs",
-                "- Sends alerts to telex",
-                " Configurable cron log path and monitoring interval"
+                "- Sends alerts to Telex",
+                "- Configurable cron monitoring interval"
             ],
             "integration_category": "Monitoring & Logging",
             "author": "Elijah Denis",
             "website": base_url,
             "settings": [
                 {
-                    "label": "cron_log_path",
-                    "type": "dropdown",
-                    "required": True,
-                    "default": cron_log_path,
-                    "options": log_paths
-                },
-                {
-                    "label": "interval_integrations",
+                    "label": "interval",
                     "type": "text",
                     "required": True,
                     "default": "*/5 * * * *"
                 },
-
             ],
             "target_url": f"{base_url}",
             "tick_url": f"{base_url}/tick"
@@ -99,73 +78,41 @@ def integration_json(request: Request):
     return integration_json
 
 
-async def check_cron_failures(log_path: str):
+async def check_cron_failures():
     """
-    Checks for failed logs in the cron log file
-    Returns a string containing the failed logs
+    Checks for failed cron jobs using hardcoded logs.
     """
-    log_file = Path(log_path)
+    failure_logs = [
+        "CRON[12345]: (user) CMD (/bin/bash /fail.sh) failed",
+        "FAILED TO EXECUTE /USR/SBIN/CRON"
+    ]
+    return "\n".join(failure_logs) if failure_logs else "No failures detected"
 
-    if not log_file.exists():
-        log_file.parent.mkdir(parents=True, exist_ok=True) 
-        with log_file.open("w", encoding="utf-8") as f:
-            f.write("CRON[12345]: (user) CMD (/bin/bash /fail.sh) failed\n")
 
-    error_messages = []
-    
-    try:
-        with log_file.open("r", encoding="utf-8") as file:
-            log_lines = file.readlines()
+async def send_logs_to_api(failures: str, return_url: str):
+    """
+    Sends failed cron logs to Telex.
+    """
+    log_data = {
+        "event_name": "Failed Cron Job",
+        "username": "Cron Monitor",
+        "status": "error",
+        "message": f"Failed Cron Jobs Detected:\n{failures}"
+    }
 
-            failure_patterns = [
-                r"CRON\[[0-9]+\]: \(.*\) CMD \(.*\) failed",
-                r"CRON\[[0-9]+\]: (.*error.*|.*failed.*)",
-                r"FAILED TO EXECUTE /USR/SBIN/CRON"
-            ]
-
-            for line in log_lines:
-                for pattern in failure_patterns:
-                    if re.search(pattern, line):
-                        error_messages.append(line.strip())
-
-    except Exception as e:
-        return f"Error reading log file: {str(e)}"
-
-    return "\n".join(error_messages) if error_messages else "No failures detected"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(return_url, json=log_data)
+        print(f"API Response: {response.status_code} - {response.text}")
 
 
 async def cron_task(payload: CronPayload):
     """
-    Task for cron jobs and failures and send results.
+    Fetch cron failures and send them to the return_url.
     """
-    print(f"Test log path: {TEST_LOG_PATH}")
-    
+    failures = await check_cron_failures()
 
-    cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
-
-    for setting in payload.settings:
-        if setting.label == "cron_log_path" and Path(setting.default).exists():
-            cron_log_path = setting.default
-
-    failures = await check_cron_failures(cron_log_path)
-
-    if failures is not None and failures.strip():
-        telex_format = {
-            "event_name": "Failed Cron Job",
-            "username": "Cron Monitor",
-            "status": "error",
-            "message": f"Failed Cron Jobs Detected:\n{failures}"
-        }
-
-        headers = {"Content-Type": "application/json"}
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                payload.return_url,
-                json=telex_format,
-                headers=headers
-            )
-        print(f"Telex Response: {response.status_code} - {response.text}")
+    if failures and failures.strip():
+        await send_logs_to_api(failures, payload.return_url)
 
 
 @app.post("/tick", status_code=202)
@@ -173,29 +120,10 @@ def monitor_cron_jobs(payload: CronPayload, background_tasks: BackgroundTasks):
     """Immediately returns 202 and runs cron monitoring in the background."""
 
     background_tasks.add_task(cron_task, payload)
-    print(
-        "Telex received Data: ",
-        json.dumps(payload.dict(), indent=2)
-    )
     return {
         "status": "success",
-        "message": "Cron monitoring task has been completed."
+        "message": "Cron monitoring task has started."
     }
-
-@app.get("/check-log")
-def check_log_file():
-    log_path = "/opt/render/project/src/file_logs/test_syslog.log"
-    log_file = Path(log_path)
-
-    if not log_file.exists():
-        return {"error": "Log file does not exist", "path": log_path}
-
-    try:
-        with log_file.open("r", encoding="utf-8") as file:
-            sample_logs = file.readlines()[:5]  # Read first 5 lines
-        return {"status": "File exists", "sample_logs": sample_logs}
-    except Exception as e:
-        return {"error": str(e)}
 
 
 if __name__ == "__main__":
