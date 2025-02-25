@@ -1,6 +1,7 @@
 import re
 import json
 import httpx
+import os
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List
@@ -40,16 +41,19 @@ app.add_middleware(
 @app.get("/integration.json")
 def integration_json(request: Request):
     base_url = str(request.base_url).rstrip("/")
+    TEST_LOG_PATH = os.path.abspath("test/logs/test_syslog.log")
 
     log_paths = [
         "/var/log/syslog",
         "/var/log/cron.log",
         "/var/log/messages",
-        "/var/log/auth.log"
+        "/var/log/auth.log",
+        TEST_LOG_PATH
     ]
+    
 
     # Find the first existing log path dynamically
-    cron_log_path = next((path for path in log_paths if Path(path).exists()), "/var/log/syslog")
+    cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
 
     integration_json = {
         "data": {
@@ -135,19 +139,22 @@ async def cron_task(payload: CronPayload):
     """
     Task for cron jobs and failures and send results.
     """
+    TEST_LOG_PATH = os.path.abspath("test/logs/test_syslog.log")
+    
 
     log_paths = [
         "/var/log/syslog",
         "/var/log/cron.log",
         "/var/log/messages",
-        "/var/log/auth.log"
+        "/var/log/auth.log",
+        TEST_LOG_PATH
     ]
 
-    cron_log_path = next((path for path in log_paths if Path(path).exists()), "/var/log/syslog")
+    cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
 
     for setting in payload.settings:
         if setting.label == "cron_log_path" and Path(setting.default).exists():
-            cron_log_path = setting.default  
+            cron_log_path = setting.default
 
     failures = await check_cron_failures(cron_log_path)
 

@@ -106,41 +106,41 @@ The `/tick` endpoint accepts a `POST` request with the following JSON payload:
 ```
 
 ### Explanation:
+
 - `channel_id`: The ID of the Telex channel.
 - `return_url`: The URL where the monitoring results will be sent.
 - `settings`: An array of settings for the monitored sites. The settings are defined by the integration author and can only be used by the author. Telex only sends the settings whenever the /tick_url is called.
 
 
 ### Response:
+
 - **202 Accepted**: The monitoring task has been accepted and is running in the background.
 
 ## Testing the Integration Locally
+
 You can test the `/tick` enpoint locally using `curl`
 
 ```bash
-curl -X POST "https://webhooks/url" \
-     -H "Content-Type: application/json" \
-     -d '{
-          "channel_id": "Cron Jobs",
-          "return_url": "https://webhooks/url",
-          "settings": [
-            {
-              "label": "cron_log_path",
-              "type": "dropdown",
-              "required": true,
-              "default": "/var/log/syslog"
-            }
-          ]
-        }'
+curl -X POST "https://failed-cron-job.onrender.com/tick" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel_id": "my_first_chanel", 
+    "return_url": "https://ping.telex.im/v1/webhooks/019537ae-6f4b-7a7b-94b6-011175b27f96", 
+    "settings": [
+      {
+        "label": "cron_log_path",
+        "type": "dropdown",
+        "required": true,
+        "default": "/test/logs/test_syslog.log"
+      }
+    ]
+  }'
 
 ```
 
-## Background Handling
+## Expected Response
 
-Monitoring tasks run asynchronously in the background. Telex has a low tolerance for delays and will time out after approximately one second. To accommodate this:
-
-- Monitoring requests are accepted immediately with a `202` response.
-- The actual site checks are performed asynchronously in a background task.
-- Only sites that respond within the specified timeout are reported.
-
-**Important:** Make sure your integration returns an accepted response to Telex, then proceed to do processing in the background, returning results to the channel when this processing is complete. This ensures it can receive many other requests and is kept fast.
+```bash
+"status": "success",
+"message": "Cron monitoring task has been completed."
+```
