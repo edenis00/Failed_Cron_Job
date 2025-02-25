@@ -37,7 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TEST_LOG_PATH = os.path.abspath("/tmp/test_syslog.log")
+TEST_LOG_PATH = os.path.abspath("/logs/test_syslog.log")
 
 log_paths = [
     "/var/log/syslog",
@@ -185,7 +185,7 @@ def monitor_cron_jobs(payload: CronPayload, background_tasks: BackgroundTasks):
 
 @app.get("/check-log")
 def check_log_file():
-    log_path = "/opt/render/project/src/tmp/test_syslog.log"
+    log_path = "/opt/render/project/src/logs/test_syslog.log"
     log_file = Path(log_path)
 
     if not log_file.exists():
