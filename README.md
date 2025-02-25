@@ -126,17 +126,17 @@ curl -X POST "https://failed-cron-job.onrender.com/tick" \
   -d '{
     "channel_id": "my_first_chanel", 
     "return_url": "https://ping.telex.im/v1/webhooks/019537ae-6f4b-7a7b-94b6-011175b27f96", 
-    "settings": [
-      {
-        "label": "cron_log_path",
-        "type": "dropdown",
-        "required": true,
-        "default": "/test/logs/test_syslog.log"
-      }
-    ]
+    "settings": []
   }'
 
 ```
+
+Once the post request is sent
+![alt text](image.png)
+
+Check the channel for the result
+![alt text](image-1.png)
+
 
 ## Expected Response
 
