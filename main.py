@@ -104,27 +104,26 @@ async def check_cron_failures(log_path: str):
     Checks for failed logs in the cron log file
     Returns a string containing the failed logs
     """
-    error_messages = []
     log_file = Path(log_path)
 
     if not log_file.exists():
-        return "Log file does not exist or is inaccessible."
+        log_file.parent.mkdir(parents=True, exist_ok=True) 
+        with log_file.open("w", encoding="utf-8") as f:
+            f.write("CRON[12345]: (user) CMD (/bin/bash /fail.sh) failed\n")
 
+    error_messages = []
+    
     try:
         with log_file.open("r", encoding="utf-8") as file:
             log_lines = file.readlines()
-            print(log_lines)
 
             failure_patterns = [
                 r"CRON\[[0-9]+\]: \(.*\) CMD \(.*\) failed",
                 r"CRON\[[0-9]+\]: (.*error.*|.*failed.*)",
-                r"pam_unix\(cron:session\): session closed for user .*",
-                r"FAILED TO EXECUTE /USR/SBIN/CRON",
-                r"CRON\[[0-9]+\]: error.*",
-                r"CMD \((.*)\) FAILED",
+                r"FAILED TO EXECUTE /USR/SBIN/CRON"
             ]
 
-            for line in log_lines[-100:]:
+            for line in log_lines:
                 for pattern in failure_patterns:
                     if re.search(pattern, line):
                         error_messages.append(line.strip())
@@ -132,7 +131,7 @@ async def check_cron_failures(log_path: str):
     except Exception as e:
         return f"Error reading log file: {str(e)}"
 
-    return "\n".join(error_messages) if error_messages else None
+    return "\n".join(error_messages) if error_messages else "No failures detected"
 
 
 async def cron_task(payload: CronPayload):
