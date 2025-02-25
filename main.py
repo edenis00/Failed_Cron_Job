@@ -37,19 +37,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+TEST_LOG_PATH = os.path.abspath("/tmp/test_syslog.log")
+print(f"Test log path: {TEST_LOG_PATH}")
+
+log_paths = [
+    "/var/log/syslog",
+    "/var/log/cron.log",
+    "/var/log/messages",
+    "/var/log/auth.log",
+    TEST_LOG_PATH
+]    
+
 
 @app.get("/integration.json")
 def integration_json(request: Request):
     base_url = str(request.base_url).rstrip("/")
-    TEST_LOG_PATH = os.path.abspath("test/logs/test_syslog.log")
-
-    log_paths = [
-        "/var/log/syslog",
-        "/var/log/cron.log",
-        "/var/log/messages",
-        "/var/log/auth.log",
-        TEST_LOG_PATH
-    ]    
 
     # Find the first existing log path dynamically
     cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
@@ -138,16 +140,6 @@ async def cron_task(payload: CronPayload):
     """
     Task for cron jobs and failures and send results.
     """
-    TEST_LOG_PATH = os.path.abspath("test/logs/test_syslog.log")
-    print(TEST_LOG_PATH)
-
-    log_paths = [
-        "/var/log/syslog",
-        "/var/log/cron.log",
-        "/var/log/messages",
-        "/var/log/auth.log",
-        TEST_LOG_PATH
-    ]
 
     cron_log_path = next((path for path in log_paths if Path(path).exists()), TEST_LOG_PATH)
 
