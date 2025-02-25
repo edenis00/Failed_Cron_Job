@@ -190,6 +190,21 @@ def monitor_cron_jobs(payload: CronPayload, background_tasks: BackgroundTasks):
         "message": "Cron monitoring task has been completed."
     }
 
+@app.get("/check-log")
+def check_log_file():
+    log_path = "/opt/render/project/src/test/logs/test_syslog.log"
+    log_file = Path(log_path)
+
+    if not log_file.exists():
+        return {"error": "Log file does not exist", "path": log_path}
+
+    try:
+        with log_file.open("r", encoding="utf-8") as file:
+            sample_logs = file.readlines()[:5]  # Read first 5 lines
+        return {"status": "File exists", "sample_logs": sample_logs}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 if __name__ == "__main__":
     import uvicorn
